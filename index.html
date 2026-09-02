@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flex Follower App</title>
+    <!-- مكتبة الأيقونات FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Telegram WebApp SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #0f172a;
+            --tg-theme-text-color: #f8fafc;
+            --tg-theme-hint-color: #94a3b8;
+            --tg-theme-button-color: #6366f1;
+            --tg-theme-button-text-color: #ffffff;
+            --card-bg: #1e293b;
+            --accent: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            padding-bottom: 80px;
+            min-height: 100vh;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-bottom: 1px solid #334155;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--tg-theme-button-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .points-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-details h4 {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .card-details p {
+            font-size: 13px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .btn {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-success {
+            background-color: var(--accent);
+        }
+
+        /* شريط التنقل السفلي */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #1e293b;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            border-top: 1px solid #334155;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            text-align: center;
+            color: var(--tg-theme-hint-color);
+            cursor: pointer;
+            font-size: 12px;
+            transition: 0.2s;
+            background: none;
+            border: none;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--tg-theme-button-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background-color: #0f172a;
+            color: white;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- الهيدر العلوي -->
+    <div class="header">
+        <div class="user-info">
+            <div class="avatar" id="userAvatar">U</div>
+            <div>
+                <h3 id="userName">المستخدم</h3>
+                <p style="font-size: 11px; color: var(--tg-theme-hint-color);">نشط الآن</p>
+            </div>
+        </div>
+        <div class="points-badge">
+            <i class="fa-solid fa-coins"></i>
+            <span id="userPoints">0</span>
+        </div>
+    </div>
+
+    <!-- المحتوى الرئيسي -->
+    <div class="container">
+        
+        <!-- قسم إجبار المهام لجمع النقاط (Earn) -->
+        <div id="tab-earn" class="tab-content active">
+            <h2 style="margin-bottom: 15px; font-size: 18px;"><i class="fa-solid fa-tasks"></i> مهام زيادة النقاط</h2>
+            <div id="tasksList">
+                <!-- المهام تضاف ديناميكياً -->
+                <div class="card">
+                    <div class="card-details">
+                        <h4>متابعة قناة تليغرام</h4>
+                        <p>احصل على <span style="color: var(--accent);">+5 نقاط</span></p>
+                    </div>
+                    <button class="btn" onclick="completeTask(5, this)">تنفيذ <i class="fa-solid fa-arrow-left"></i></button>
+                </div>
+                <div class="card">
+                    <div class="card-details">
+                        <h4>متابعة حساب TikTok</h4>
+                        <p>احصل على <span style="color: var(--accent);">+5 نقاط</span></p>
+                    </div>
+                    <button class="btn" onclick="completeTask(5, this)">تنفيذ <i class="fa-solid fa-arrow-left"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم طلب المتابعين (Boost) -->
+        <div id="tab-boost" class="tab-content">
+            <h2 style="margin-bottom: 15px; font-size: 18px;"><i class="fa-solid fa-bullhorn"></i> اطلب متابعين لنفسك</h2>
+            <div class="card" style="display: block;">
+                <div class="form-group">
+                    <label>رابط حسابك أو قناتك</label>
+                    <input type="text" id="targetLink" class="form-control" placeholder="@username أو الرابط">
+                </div>
+                <div class="form-group">
+                    <label>عدد المتابعين المطلوبة (تكلفة المتابع 5 نقاط)</label>
+                    <input type="number" id="targetCount" class="form-control" placeholder="مثال: 10">
+                </div>
+                <button class="btn btn-success" style="width: 100%; justify-content: center;" onclick="createCampaign()">
+                    إضافة الحملة <i class="fa-solid fa-circle-plus"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- قسم الملف الشخصي -->
+        <div id="tab-profile" class="tab-content">
+            <h2 style="margin-bottom: 15px; font-size: 18px;"><i class="fa-solid fa-user-gear"></i> إحصائيات حسابك</h2>
+            <div class="card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                <p><strong>معرف المستخدم:</strong> <span id="profileId">-</span></p>
+                <p><strong>النقاط الإجمالية:</strong> <span id="profilePoints">0</span></p>
+                <p><strong>الحملات النشطة:</strong> 0</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- شريط التنقل السفلي -->
+    <div class="nav-bar">
+        <button class="nav-item active" onclick="switchTab('earn', this)">
+            <i class="fa-solid fa-coins"></i>
+            جمع النقاط
+        </button>
+        <button class="nav-item" onclick="switchTab('boost', this)">
+            <i class="fa-solid fa-rocket"></i>
+            طلب متابعين
+        </button>
+        <button class="nav-item" onclick="switchTab('profile', this)">
+            <i class="fa-solid fa-user"></i>
+            حسابي
+        </button>
+    </div>
+
+    <script>
+        // تهيئة Telegram WebApp
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let userData = {
+            id: tg.initDataUnsafe?.user?.id || 12345678,
+            first_name: tg.initDataUnsafe?.user?.first_name || "مستخدم تجريبي",
+            points: 25
+        };
+
+        // تحديث البيانات بالواجهة
+        document.getElementById('userName').innerText = userData.first_name;
+        document.getElementById('userAvatar').innerText = userData.first_name.charAt(0).toUpperCase();
+        document.getElementById('userPoints').innerText = userData.points;
+        document.getElementById('profilePoints').innerText = userData.points;
+        document.getElementById('profileId').innerText = userData.id;
+
+        // التبديل بين التبويبات
+        function switchTab(tabName, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        // محاكاة إتمام المهمة
+        function completeTask(reward, button) {
+            button.innerText = "جاري التحقق...";
+            button.disabled = true;
+            
+            setTimeout(() => {
+                userData.points += reward;
+                document.getElementById('userPoints').innerText = userData.points;
+                document.getElementById('profilePoints').innerText = userData.points;
+                button.parentElement.style.opacity = "0.5";
+                button.innerText = "تم بنجاح ✓";
+                tg.showAlert(`رائع! تمت إضافة ${reward} نقاط إلى رصيدك.`);
+            }, 1500);
+        }
+
+        // إنشاء حملة طلب متابعين
+        function createCampaign() {
+            let link = document.getElementById('targetLink').value;
+            let count = document.getElementById('targetCount').value;
+            let cost = count * 5;
+
+            if(!link || !count) {
+                tg.showAlert("الرجاء إدخال الرابط والعدد المطلوب!");
+                return;
+            }
+
+            if(userData.points < cost) {
+                tg.showAlert("رصيدك من النقاط غير كافٍ لإنشاء هذه الحملة!");
+                return;
+            }
+
+            userData.points -= cost;
+            document.getElementById('userPoints').innerText = userData.points;
+            document.getElementById('profilePoints').innerText = userData.points;
+            
+            tg.showAlert("تم إطلاق حملتك بنجاح وبدء إرسال المتابعين!");
+            document.getElementById('targetLink').value = '';
+            document.getElementById('targetCount').value = '';
+        }
+    </script>
+</body>
+</html>
+
